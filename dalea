@@ -1,0 +1,1513 @@
+﻿/*
+Enunt examen POO 30 iunie 2020 ora 8.00
+Să se scrie o aplicație orientată obiect pentru evidenta activitatilor zilnice ale unei persoane; este necesară cunoașterea activitatii, a orei de desfasurare și a duratei estimate.
+Pentru domeniul dat, să se definească o clasă cu membri de tip public, private,  protected, const, static, care să conțină:
+(1p) definirea corectă a clasei;
+(2p) constructor cu parametri, default constructor, constructor de copiere, destructor și operator<< pentru afișare (0.5 puncte/funcție/operator) ;
+(2p) operator=, un operator pentru compararea între obiecte și încă doi operatori adecvați domeniului (aritmetici sau cast sau indexare sau de alt tip) (0.5 puncte/funcție/operator) ;
+(1p) două funcții de tip accesor și două metode proprii clasei (0.25 puncte/funcție/operator);
+ (1p) funcții sau operatori pentru salvarea și restaurarea obiectelor în/din fișiere binare, permanente.
+ (2p) Definiți încă o clasă, capabilă să gestioneze o colecție de obiecte din prima clasă; operatorii += și -= vor asigura adăugarea / scoaterea obiectelor din colecție.
+(1p) Transformați una din clase într-o clasă template sau instanțiați o clasă template STL, pentru domeniul dat.
+Elementele definite vor fi punctate doar dacă sunt complete și au fost testate în main().
+
+*/
+#define _CRT_SECURE_NO_WARNINGS
+#include<iostream>
+#include<string>
+#include<fstream>
+#include<vector>
+#include<set>
+#include<map>
+#include<algorithm>
+using namespace std;
+
+enum grad 
+{
+	Usoara,Medie, Grea, FoarteGrea
+};
+//functia virtuala pura este o functie virtuala care nu are corp si este egala cu 0;
+// pointer-ul din tabela de pointeri la functii virtuale este initializat cu NULL(nu are adresa unei functii)
+
+class Abstracta
+{
+public:
+	virtual int returneazaCevaInt() = 0;
+};
+class ExceptieMesaj : public exception
+{
+	string mesaj;
+public:
+	ExceptieMesaj()
+	{
+		this->mesaj = "Necunoscuta";
+	}
+	ExceptieMesaj(string mesaj)
+	{
+		this->mesaj = mesaj;
+	}
+	string getMesaj()
+	{
+		return this->mesaj;
+	}
+	~ExceptieMesaj()
+	{
+
+	}
+};
+//ce este o clasa?
+// este o structura de date ce incorporeaza date si functii
+
+class Activitate: public Abstracta
+{
+	const int idActivitate;
+protected:
+	char* denumire;
+	string locatie;
+	int durata;//in minute
+	int nrObiecte;
+	string* denumireObiecte;
+	float* greutateObiecte;
+	grad gradDificultate;
+public:
+	static int numarator;
+
+	//ce sunt constructorii
+	//functii membre speciale, nu au tip returnat, au acelasi nume cu clasa
+
+	//pentru ce ii folosim
+	//pentru a crea obiecte 
+
+	//de 3 feluri:
+	//1)constructorul fara parametrii/implicit/default
+	//2)Constructor cu parametrii( de la 1 pana la n= nr atributelor din clasa))
+	//3)Constructor de copiere
+
+	Activitate() :idActivitate(numarator++)
+	{
+		this->denumire = new char[strlen("") + 1];
+		strcpy(this->denumire, "");
+		this->locatie = "Necunoscuta";
+		this->durata = 0;
+		this->nrObiecte = 0;
+		this->denumireObiecte = nullptr;
+		this->greutateObiecte = nullptr;
+		this->gradDificultate = Usoara;
+	}
+	Activitate(string locatie) :idActivitate(numarator++)
+	{
+		this->denumire = new char[strlen("") + 1];
+		strcpy(this->denumire, "");
+		this->locatie = locatie;
+		this->durata = 0;
+		this->nrObiecte = 0;
+		this->denumireObiecte = nullptr;
+		this->greutateObiecte = nullptr;
+		this->gradDificultate = Usoara;
+	}
+	//constructorul cu toti parametrii
+	Activitate(const char* denumire, string locatie, int durata, int nrObiecte, string* denumireObiecte, float* greutateObiecte, grad gradDificultate) :idActivitate(numarator++)
+	{
+		//validarea pentru char*
+		if (strlen(denumire) > 2)
+		{
+			this->denumire = new char[strlen(denumire) + 1];
+			strcpy(this->denumire, denumire);
+		}
+		else
+		{
+			this->denumire = new char[strlen("") + 1];
+			strcpy(this->denumire, "");
+		}
+		//validarea pentru string
+		if (locatie.size() >= 3)//locatie.length()>=3
+		{
+			this->locatie = locatie;
+		}
+		else
+		{
+			this->locatie = "Necunoscuta";
+		}
+		if (durata > 0)
+		{
+			this->durata = durata;
+		}
+		else
+		{
+			this->durata = 0;
+
+		}
+		if (nrObiecte > 0 && denumireObiecte != NULL && greutateObiecte != NULL)
+		{
+			this->nrObiecte = nrObiecte;
+			this->denumireObiecte = new string[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->denumireObiecte[i] = denumireObiecte[i];
+			}
+			this->greutateObiecte = new float[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->greutateObiecte[i] = greutateObiecte[i];
+			}
+		}
+		else
+		{
+			this->nrObiecte = 0;
+			this->denumireObiecte = nullptr;
+			this->greutateObiecte = nullptr;
+		}
+		this->gradDificultate = gradDificultate;
+	}
+	//constructorul de copiere 
+	//se apeleaza atunci cand cream un obiect nou pe baza altuia care deja exista
+	//are aceeasi forma ca si constructorul normal cu toti parametrii 
+	Activitate(const Activitate& a) :idActivitate(a.idActivitate)
+	{
+		//validarea pentru char*
+		if (strlen(a.denumire) > 2)
+		{
+			this->denumire = new char[strlen(a.denumire) + 1];//+1 este pt terminator '\0'
+			strcpy(this->denumire, a.denumire);
+		}
+		else
+		{
+			this->denumire = new char[strlen("") + 1];
+			strcpy(this->denumire, "");
+		}
+		//validarea pentru string
+		if (a.locatie.size() >= 3)//locatie.length()>=3
+		{
+			this->locatie = a.locatie;
+		}
+		else
+		{
+			this->locatie = "Necunoscuta";
+		}
+		if (a.durata > 0)
+		{
+			this->durata = a.durata;
+		}
+		else
+		{
+			this->durata = 0;
+
+		}
+		if (a.nrObiecte > 0 && a.denumireObiecte != NULL && a.greutateObiecte != NULL)
+		{
+			this->nrObiecte = a.nrObiecte;
+			this->denumireObiecte = new string[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->denumireObiecte[i] = a.denumireObiecte[i];
+			}
+			this->greutateObiecte = new float[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->greutateObiecte[i] = a.greutateObiecte[i];
+			}
+		}
+		else
+		{
+			this->nrObiecte = 0;
+			this->denumireObiecte = nullptr;
+			this->greutateObiecte = nullptr;
+		}
+		this->gradDificultate = a.gradDificultate;
+	}
+
+	//getteri -- metode/functii accesor - care permit acccesul pentru citire pentru atributele din clasa 
+	//modul de scriere al unui getter(un sablon)
+	// tipulDeDataVariabila getNumeVariabila() { return this->variabila;}
+	const int getIdActivitate()
+	{
+		return this->idActivitate;
+	}
+	char* getDenumire()
+	{
+		return this->denumire;
+	}
+	string getLocatie()
+	{
+		return this->locatie;
+	}
+	int getDurata()
+	{
+		return this->durata;
+	}
+	int getNrObiecte()
+	{
+		return this->nrObiecte;
+	}
+	string* getDenumireObiecte()
+	{
+		return this->denumireObiecte;
+	}
+	float* getGreutateObiecte()
+	{
+		return this->greutateObiecte;
+	}
+	grad getGradDificultate()
+	{
+		return this->gradDificultate;
+	}
+	//setteri -- metode accesor care permit modificarea atributelor din clasa
+	//setterul are mereu tipul VOID -- pentru ca nu intoarce nimic, doar modifica
+	//seterul are mereu cel putin un parametru
+	// sablon : void setNumeVariabila(tipVariabila numeVariabila){ this->numeVariabila = numeVariabila;}
+	//pentru atributele alocate dinamic(pointeri[aia cu *]) trebuie mai intai sa dezalocam memoria folosind delete si apoi sa alocam iar cu new
+	void setDenumire(const char* denumire)
+	{
+
+		if (strlen(denumire) > 2)
+		{
+			if (this->denumire != NULL)
+			{
+				delete[] this->denumire;
+			}
+			this->denumire = new char[strlen(denumire) + 1];
+			strcpy(this->denumire, denumire);
+		}
+		else throw ExceptieMesaj("Denumirea este gresita!");
+
+	}
+	void setLocatie(string locatie)
+	{
+		if (locatie.size() >= 3)//locatie.length()>=3
+		{
+			this->locatie = locatie;
+		}
+	}
+	void setDurata(int durata)
+	{
+		if (durata > 0)
+		{
+			this->durata = durata;
+		}
+	}
+	void setObiecte(int nrObiecte, string* denumireObiecte, float* greutateObiecte)
+	{
+		if (nrObiecte > 0 && denumireObiecte != NULL && greutateObiecte != NULL)
+		{
+			this->nrObiecte = nrObiecte;
+			this->denumireObiecte = new string[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->denumireObiecte[i] = denumireObiecte[i];
+			}
+			this->greutateObiecte = new float[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				this->greutateObiecte[i] = greutateObiecte[i];
+			}
+		}
+	}
+	void setGradDificultate(grad gradDificultate)
+	{
+		this->gradDificultate = gradDificultate;
+	}
+	//operator = 
+	//intializare/atribuirea unui obiect existent pe baza altuia deja existent
+	//operator = se compune din ce scrie in destructor + ce scrie in constructor de copiere + return *this
+	Activitate& operator= (const Activitate& a)
+	{
+		//evitatea auto-asignarii(sa nu putem face a1=a1/sa nu putem facem auto-atribuirea)
+		if (this != &a)
+		{
+			if (this->denumire != NULL)
+			{
+				delete[] this->denumire;
+			}
+			if (this->denumireObiecte != NULL)
+			{
+				delete[] this->denumireObiecte;
+			}
+			if (this->greutateObiecte != NULL)
+			{
+				delete[] this->greutateObiecte;
+			}
+			//validarea pentru char*
+			if (strlen(a.denumire) > 2)
+			{
+				this->denumire = new char[strlen(a.denumire) + 1];
+				strcpy(this->denumire, a.denumire);
+			}
+			else
+			{
+				this->denumire = new char[strlen("") + 1];
+				strcpy(this->denumire, "");
+			}
+			//validarea pentru string
+			if (a.locatie.size() >= 3)//locatie.length()>=3
+			{
+				this->locatie = a.locatie;
+			}
+			else
+			{
+				this->locatie = "Necunoscuta";
+			}
+			if (a.durata > 0)
+			{
+				this->durata = a.durata;
+			}
+			else
+			{
+				this->durata = 0;
+
+			}
+			if (a.nrObiecte > 0 && a.denumireObiecte != NULL && a.greutateObiecte != NULL)
+			{
+				this->nrObiecte = a.nrObiecte;
+				this->denumireObiecte = new string[this->nrObiecte];
+				for (int i = 0; i < this->nrObiecte; i++)
+				{
+					this->denumireObiecte[i] = a.denumireObiecte[i];
+				}
+				this->greutateObiecte = new float[this->nrObiecte];
+				for (int i = 0; i < this->nrObiecte; i++)
+				{
+					this->greutateObiecte[i] = a.greutateObiecte[i];
+				}
+			}
+			else
+			{
+				this->nrObiecte = 0;
+				this->denumireObiecte = nullptr;
+				this->greutateObiecte = nullptr;
+			}
+			this->gradDificultate = a.gradDificultate;
+			return *this;
+		}
+
+	}
+
+	//destructor 
+	//functie membra speciala
+	// are rol de a dezalocam memoria de pe stiva
+	~Activitate()
+	{
+		if (this->denumire != NULL)
+		{
+			delete[] this->denumire;
+		}
+		if (this->denumireObiecte != NULL)
+		{
+			delete[] this->denumireObiecte;
+		}
+		if (this->greutateObiecte != NULL)
+		{
+			delete[] this->greutateObiecte;
+		}
+		
+	}
+	bool operator >(Activitate a)
+	{
+		return this->durata > a.durata;
+	}
+	bool operator <(const Activitate& a)const
+	{
+		return this->durata < a.durata;
+	}
+	//Metode -- functii specifice clasei, care primesc pointerul this ca parametru implicit si au rol de a prelucra datele din clasa
+	//metode mai usoare: suma, min , medie, maxim
+	float greutateTotala()
+	{
+		float suma = 0;
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			suma = suma + this->greutateObiecte[i];
+		}
+		return suma;
+	}
+	float mediaGreutate()
+	{
+		float suma = 0;
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			suma = suma + this->greutateObiecte[i];
+		}
+		return suma / this->nrObiecte;
+	}
+	float minim()
+	{
+		float minim = this->greutateObiecte[0];
+		for (int i = 1; i < this->nrObiecte; i++)
+		{
+			if (minim > this->greutateObiecte[i])
+			{
+				minim = greutateObiecte[i];
+			}
+		}
+		return minim;
+	}
+	float maxim()
+	{
+		float maxim = this->greutateObiecte[0];
+		for (int i = 1; i < this->nrObiecte; i++)
+		{
+			if (maxim < this->greutateObiecte[i])
+			{
+				maxim = greutateObiecte[i];
+			}
+		}
+		return maxim;
+	}
+	void adaugaObiect(string numeObiect, float greutateObiect)
+	{
+		Activitate copie = *this;// adica creez exact un obiect care are aceleasi trasaturi ca obiectul *this
+		this->nrObiecte++;
+		delete[]this->denumireObiecte;
+		delete[]this->greutateObiecte;
+		this->denumireObiecte = new string[this->nrObiecte];
+		this->greutateObiecte = new float[this->nrObiecte];
+		for (int i = 0; i < copie.nrObiecte; i++)
+		{
+			this->denumireObiecte[i] = copie.denumireObiecte[i];
+		}
+		for (int i = 0; i < copie.nrObiecte; i++)
+		{
+			this->greutateObiecte[i] = copie.greutateObiecte[i];
+		}
+		this->denumireObiecte[this->nrObiecte - 1] = numeObiect;
+		this->greutateObiecte[this->nrObiecte - 1] = greutateObiect;
+	}
+	void eliminaObiect(string numeObiect)
+	{
+		Activitate copie = *this;
+		int nr = 0;//in el salvez de cate ori imi apare numeleObiectului in vectorul cautat
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			if (this->denumireObiecte[i] == numeObiect)
+			{
+				nr++;
+			}
+		}
+		this->nrObiecte = nrObiecte - nr;
+		delete[] this->denumireObiecte;
+		delete[] this->greutateObiecte;
+		int pozitie = 0;
+		this->denumireObiecte = new string[this->nrObiecte];
+		this->greutateObiecte = new float[this->nrObiecte];
+		for (int i = 0; i < copie.nrObiecte; i++)
+		{
+			if (copie.denumireObiecte[i] != numeObiect)
+			{
+				this->denumireObiecte[pozitie] = copie.denumireObiecte[i];
+				this->greutateObiecte[pozitie] = copie.greutateObiecte[i];
+				pozitie++;
+			}
+		}
+	}
+	//operatori
+
+	//friend
+	//este un atribut care ne permite accesul la atributele din zona privata a clasei
+	//este necesar cand avem un operator binar, iar primul parametru primit nu este de tipul clasei
+	//operator<<
+	friend ostream& operator<<(ostream& out, const Activitate& a)
+	{
+		out << "Id activitate: " << a.idActivitate << endl;
+		out << "Denumire activitate: " << a.denumire << endl;
+		out << "Locatie activitate: " << a.locatie << endl;
+		out << "Durata: " << a.durata << endl;
+		out << "Numar Obiecte: " << a.nrObiecte << endl;
+		out << "Denumire Obiecte: ";
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			out << a.denumireObiecte[i] << " | ";
+		}
+		out << endl;
+		out << "Greutate Obiecte: ";
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			out << a.greutateObiecte[i] << " | ";
+		}
+		out << endl;
+		out << "Grad dificultate activitate: ";
+		switch (a.gradDificultate)
+		{
+		case 0: out << "Usoara" << endl; break;
+		case 1: out << "Medie" << endl; break;
+		case 2: out << "Grea" << endl; break;
+		case 3: out << "Foarte Grea" << endl; break;
+		default:
+			out << "Usoara" << endl; break;
+		}
+		return out;
+
+	}
+
+
+	//operator>>
+	//pt atributele alocate dinamic mai intai trebuie dezalocate si apoi alocate iar
+	//in operator>> nu citim niciodata, dar niciodata atributele statice sau constante
+	friend istream& operator>>(istream& in, Activitate& a)
+	{
+
+		if (a.denumire != NULL)
+		{
+			delete[] a.denumire;
+		}
+		if (a.denumireObiecte != NULL)
+		{
+			delete[] a.denumireObiecte;
+		}
+		if (a.greutateObiecte != NULL)
+		{
+			delete[] a.greutateObiecte;
+		}
+
+		//pt char*
+		cout << "Denumirea: ";
+		char aux[200];
+		in >> ws;//doar daca folosim getline
+		in.getline(aux, 199);//in>>aux;
+		a.denumire = new char[strlen(aux) + 1];
+		strcpy(a.denumire, aux);
+
+		//pt string
+		cout << "Locatia: ";
+		in >> ws;
+		getline(in, a.locatie);
+		//pt numerice
+		cout << "Durata: ";
+		in >> a.durata;
+		cout << "Nr Obiecte: ";
+		in >> a.nrObiecte;
+		//string*
+		cout << "Denumire Obiecte: ";
+		a.denumireObiecte = new string[a.nrObiecte];
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			in >> ws;
+			getline(in,a.denumireObiecte[i]);
+		}
+		cout << "Greutate Obiecte: ";
+		a.greutateObiecte = new float[a.nrObiecte];
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			in>>a.greutateObiecte[i];
+		}
+		cout << "Grad Dificultate: ";
+		string grad;
+		in>>ws;
+		getline(in, grad);
+		if (grad == "Usoara")
+		{
+			a.gradDificultate = Usoara;
+		}
+		else if(grad == "Medie")
+		{
+			a.gradDificultate = Medie;
+		}
+		else if (grad == "Grea")
+		{
+			a.gradDificultate = Grea;
+		}
+		else
+		{
+			a.gradDificultate = FoarteGrea;
+
+		}
+		return in;
+	}
+
+
+
+	//ofstream si ifstream se scriu ca si ostream si istream fara text aditional
+	//nu scrieti in fisier atributele constante sau statice
+
+
+	friend ofstream& operator<<(ofstream& out, const Activitate& a)
+	{
+		out << a.denumire << endl;
+		out  << a.locatie << endl;
+		out  << a.durata << endl;
+		out  << a.nrObiecte << endl;
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			out << a.denumireObiecte[i] << endl;
+		}
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			out << a.greutateObiecte[i] << endl;
+		}
+		switch (a.gradDificultate)
+		{
+		case 0: out << "Usoara" << endl; break;
+		case 1: out << "Medie" << endl; break;
+		case 2: out << "Grea" << endl; break;
+		case 3: out << "FoarteGrea" << endl; break;
+		default:
+			out << "Usoara" << endl; break;
+		}
+		return out;
+
+	}
+
+
+	//operator>>
+	//pt atributele alocate dinamic mai intai trebuie dezalocate si apoi alocate iar
+	//in operator>> nu citim niciodata, dar niciodata atributele statice sau constante
+	friend ifstream& operator>>(ifstream& in, Activitate& a)
+	{
+
+		if (a.denumire != NULL)
+		{
+			delete[] a.denumire;
+		}
+		if (a.denumireObiecte != NULL)
+		{
+			delete[] a.denumireObiecte;
+		}
+		if (a.greutateObiecte != NULL)
+		{
+			delete[] a.greutateObiecte;
+		}
+
+		//pt char*
+		char aux[200];
+		in >> ws;//doar daca folosim getline
+		in.getline(aux, 199);//in>>aux;
+		a.denumire = new char[strlen(aux) + 1];
+		strcpy(a.denumire, aux);
+
+		//pt string
+	
+		in >> ws;
+		getline(in, a.locatie);
+		//pt numerice
+		in >> a.durata;
+		in >> a.nrObiecte;
+		//string*
+		a.denumireObiecte = new string[a.nrObiecte];
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			in >> ws;
+			getline(in, a.denumireObiecte[i]);
+		}
+		a.greutateObiecte = new float[a.nrObiecte];
+		for (int i = 0; i < a.nrObiecte; i++)
+		{
+			in >> a.greutateObiecte[i];
+		}
+		string grad;
+		in >> ws;
+		getline(in, grad);
+		if (grad == "Usoara")
+		{
+			a.gradDificultate = Usoara;
+		}
+		else if (grad == "Medie")
+		{
+			a.gradDificultate = Medie;
+		}
+		else if (grad == "Grea")
+		{
+			a.gradDificultate = Grea;
+		}
+		else
+		{
+			a.gradDificultate = FoarteGrea;
+
+		}
+		return in;
+	}
+
+	//serializarea -  procesul prin care un obiect poate fi scris/transformat pe un sir de biti
+	//desearilizare -  procesul prin care un obiect este citit/restaurat de pe un sit de biti
+	void serializare(string numeFisier)
+	{
+		ofstream fisierBinar(numeFisier, ios::out, ios::binary);
+		//cum scriem in binar un char*
+		int lungimeDenumire = strlen(this->denumire);
+		fisierBinar.write((char*)&lungimeDenumire, sizeof(lungimeDenumire));
+		fisierBinar.write(this->denumire, lungimeDenumire + 1);
+		//cum scrie un string in binar
+		int lungimeLocatie = this->locatie.size();
+		fisierBinar.write((char*)&lungimeLocatie, sizeof(lungimeLocatie));
+		fisierBinar.write(this->locatie.c_str(), lungimeLocatie + 1);
+		//functia c_str() transforma stringul intr-un const char*(adauga si terminatorul '\0')
+		//pt numerice
+		fisierBinar.write((char*)&this->durata, sizeof(durata));
+		fisierBinar.write((char*)&this->nrObiecte, sizeof(nrObiecte));
+		//pt string*
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			int lungimeDenumireObiect = this->denumireObiecte[i].size();
+			fisierBinar.write((char*)&lungimeDenumireObiect, sizeof(lungimeDenumireObiect));
+			fisierBinar.write(this->denumireObiecte[i].c_str(), lungimeDenumireObiect + 1);
+		}
+		//pt float*(pt numerice*)
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			fisierBinar.write((char*)&this->greutateObiecte[i], sizeof(greutateObiecte[i]));
+		}
+		//pt enum
+		fisierBinar.write((char*)&this->gradDificultate, sizeof(gradDificultate));
+		fisierBinar.close();
+	}
+	void deserializare(string numeFisier)
+	{
+		ifstream fisierBinar(numeFisier, ios::in, ios::binary);
+		if (fisierBinar.is_open())
+		{
+			if (this->denumire != NULL)
+			{
+				delete[] this->denumire;
+			}
+			if (this->denumireObiecte != NULL)
+			{
+				delete[] this->denumireObiecte;
+			}
+			if (this->greutateObiecte != NULL)
+			{
+				delete[] this->greutateObiecte;
+			}
+			//cum citim un char*
+			int lungimeDenumire = 0;
+			fisierBinar.read((char*)&lungimeDenumire, sizeof(lungimeDenumire));
+			this->denumire= new char[lungimeDenumire+1];
+			fisierBinar.read(this->denumire, lungimeDenumire + 1);
+			//cum citim string
+			int lungimeLocatie = 0;
+			fisierBinar.read((char*)&lungimeLocatie, sizeof(lungimeLocatie));
+			char* aux = new char[lungimeLocatie + 1];
+			fisierBinar.read(aux, lungimeLocatie + 1);
+			this->locatie = aux;
+			delete[]aux;
+			//cum citim numerice
+			fisierBinar.read((char*)&this->durata, sizeof(durata));
+			fisierBinar.read((char*)&this->nrObiecte, sizeof(nrObiecte));
+			//cum citim string*
+			this->denumireObiecte = new string[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				int lungimeDenumireObiecte = 0;
+				fisierBinar.read((char*)&lungimeDenumireObiecte, sizeof(lungimeDenumireObiecte));
+				char* aux1 = new char[lungimeDenumireObiecte + 1];
+				fisierBinar.read(aux1, lungimeDenumireObiecte + 1);
+				this->denumireObiecte[i] = aux1;
+				delete[]aux1;
+			}
+			//cum citim float*
+			this->greutateObiecte = new float[this->nrObiecte];
+			for (int i = 0; i < this->nrObiecte; i++)
+			{
+				fisierBinar.read((char*)&this->greutateObiecte[i], sizeof(greutateObiecte[i]));
+			}
+			//pt enum
+			fisierBinar.read((char*)&this->gradDificultate, sizeof(gradDificultate));
+			fisierBinar.close();
+		}
+		else
+		{
+			cout << "Fisierul binar nu a fost gasit!";
+		}
+
+	}
+	//operator cast
+	//operator de conversie cu pierdere de informatii
+	//forma implicita
+	/*operator int()
+	{
+
+	}*/
+	//forma explicita
+	explicit operator int()
+	{
+		return this->durata;
+	}
+	explicit operator float()
+	{
+		return mediaGreutate();
+	}
+	//operator functie-- ()
+	float operator()()
+	{
+		return greutateTotala();
+	}
+	//operator de indexare - []
+	// pt vectori
+	string& operator [](int pozitie)
+	{
+		if (pozitie >= 0 && pozitie < nrObiecte)
+		{
+			return this->denumireObiecte[pozitie];
+		}
+		else throw ExceptieMesaj("Pozitia indicata nu exista!\n");
+	}
+	
+	//operator ++ prefixat
+	Activitate& operator++()
+	{
+		this->durata++;
+		return *this;
+	}
+
+	//operator++ postfixat
+	Activitate operator++(int)
+	{
+		Activitate copie = *this;
+		this->durata++;
+		return copie;
+	}
+
+	//operator+= 
+	Activitate& operator +=(Activitate a)
+	{
+		this->durata += a.durata;
+		return *this;
+	}
+	Activitate& operator +=(string numeObiect)
+	{
+		Activitate copie = *this;// adica creez exact un obiect care are aceleasi trasaturi ca obiectul *this
+		this->nrObiecte++;
+		delete[]this->denumireObiecte;
+		delete[]this->greutateObiecte;
+		this->denumireObiecte = new string[this->nrObiecte];
+		this->greutateObiecte = new float[this->nrObiecte];
+		for (int i = 0; i < copie.nrObiecte; i++)
+		{
+			this->denumireObiecte[i] = copie.denumireObiecte[i];
+		}
+		for (int i = 0; i < copie.nrObiecte; i++)
+		{
+			this->greutateObiecte[i] = copie.greutateObiecte[i];
+		}
+		this->denumireObiecte[this->nrObiecte - 1] = numeObiect;
+		this->greutateObiecte[this->nrObiecte - 1] = 10;
+		return *this;
+	}
+
+	//operator + 
+	// obiect +valoare
+	Activitate operator+(int valoare)
+	{
+		Activitate copie = *this;
+		copie.durata = copie.durata + valoare;
+		return copie;
+	}
+	// obiect +obiect
+	Activitate operator+(Activitate a)
+	{
+		Activitate copie = *this;
+		delete[]copie.denumireObiecte;
+		delete[]copie.greutateObiecte;
+		copie.nrObiecte = this->nrObiecte + a.nrObiecte;
+		copie.denumireObiecte = new string[copie.nrObiecte];
+		copie.greutateObiecte = new float[copie.nrObiecte];
+		for (int i = 0; i < this->nrObiecte; i++)
+		{
+			copie.denumireObiecte[i] = this->denumireObiecte[i];
+			copie.greutateObiecte[i] = this->greutateObiecte[i];
+		}
+		for (int i = this->nrObiecte; i < copie.nrObiecte; i++)
+		{
+			copie.denumireObiecte[i] = a.denumireObiecte[i- this->nrObiecte];
+			copie.greutateObiecte[i] = a.greutateObiecte[i- this->nrObiecte];
+		}
+		return copie;
+	}
+	// valoare +obiect
+	friend Activitate operator +(int valoare, Activitate a)
+	{
+		Activitate copie = a;
+		copie.durata += valoare;
+		return copie;
+	}
+
+	//functie virtuala -- se defineste folosind cuvantul virtual
+	virtual string tipActivitate()
+	{
+		return "Activitatea aceasta este normala!\n";
+	}
+	int returneazaCevaInt()
+	{
+		return this->durata;
+	}
+};
+
+
+template<typename tip>
+bool comparDurata(tip a, tip b)
+{
+	return a > b;
+}
+//operator<< ca functie globala
+//ostream& operator<<(ostream& out,  Activitate& a)
+//{
+//	out << "Id activitate: " << a.getIdActivitate() << endl;
+//	out << "Denumire activitate: " << a.getDenumire() << endl;
+//	out << "Locatie activitate: " << a.getLocatie() << endl;
+//	out << "Durata: " << a.getDurata() << endl;
+//	out << "Numar Obiecte: " << a.getNrObiecte() << endl;
+//	out << "Denumire Obiecte: ";
+//	for (int i = 0; i < a.getNrObiecte(); i++)
+//	{
+//		out << a.getDenumireObiecte()[i] << " ";
+//	}
+//	out << endl;
+//	out << "Greutate Obiecte: ";
+//	for (int i = 0; i < a.getNrObiecte(); i++)
+//	{
+//		out << a.getGreutateObiecte()[i] << " ";
+//	}
+//	out << endl;
+//	out << "Grad dificultate activitate: ";
+//	switch (a.getGradDificultate())
+//	{
+//	case 0: out << "Usoara" << endl; break;
+//	case 1: out << "Medie" << endl; break;
+//	case 2: out << "Grea" << endl; break;
+//	case 3: out << "Foarte Grea" << endl; break;
+//	default:
+//		out << "Usoara" << endl; break;
+//	}
+//	return out;
+//
+//}
+//cum initializam un static
+int Activitate::numarator = 1;
+
+
+//mostenire -- mecanismul prin care o clasa reutilizeaza codul unei alte clase(ii preia toate atributele[le mosteneste] si toate metodele)
+class ActivitateCardio: public Activitate
+{
+	int nrCaloriiArse;
+	bool scopAtins;
+public:
+	ActivitateCardio():Activitate()
+	{
+		this->nrCaloriiArse = 0;
+		this->scopAtins = 0;
+	}
+	//constructorul cu toti parametrii
+	ActivitateCardio(const char* denumire, string locatie, int durata, int nrObiecte, string* denumireObiecte, float* greutateObiecte, grad gradDificultate, int nrCaloriiArse, bool scopAtins) :Activitate( denumire,  locatie,  durata,  nrObiecte,  denumireObiecte,  greutateObiecte,  gradDificultate)
+	{
+		this->nrCaloriiArse = nrCaloriiArse;
+		this->scopAtins = scopAtins;
+	}
+	//up-castingul reprezinta procesul de a se converti din clasa derivata in clasa de baza 
+	//se face implicit de catre compilator
+
+	//constructor de copiere 
+	ActivitateCardio(const ActivitateCardio&ac) :Activitate(ac)
+	{
+		this->nrCaloriiArse = ac.nrCaloriiArse;
+		this->scopAtins = ac.scopAtins;
+	}
+	//down-casting -- reprezinta procesul de convertire din clasa de baza in clasa derivata
+	//down-casting-ul se face fortat de catre programator
+	ActivitateCardio(const Activitate& ac) :Activitate(ac)
+	{
+		this->nrCaloriiArse = 999;
+		this->scopAtins = 1;
+	}
+	ActivitateCardio& operator=(const ActivitateCardio& ac) 
+	{
+		Activitate::operator=(ac);
+		this->nrCaloriiArse = ac.nrCaloriiArse;
+		this->scopAtins = ac.scopAtins;
+		return *this;
+	}
+	~ActivitateCardio()
+	{
+
+	}
+	friend ostream& operator <<(ostream& out, const ActivitateCardio& a)
+	{
+		out << (Activitate)a;
+		out << "Nr calorii arse: " << a.nrCaloriiArse << endl;
+		out << "Scop atins?(1-Da sau 0-Nu): " << a.scopAtins << endl;
+		return out;
+	}
+	friend istream& operator>>(istream& in, ActivitateCardio& a)
+	{
+		in >> (Activitate&)a;
+		cout << "Nr calorii arse: ";
+		in>> a.nrCaloriiArse ;
+		cout << "Scop atins?(1-Da sau 0-Nu): ";
+		in >> a.scopAtins;
+		return in;
+	}
+	friend ofstream& operator <<(ofstream& out, const ActivitateCardio& a)
+	{
+		out << (Activitate)a;
+		out << "Nr calorii arse: " << a.nrCaloriiArse << endl;
+		out << "Scop atins?(1-Da sau 0-Nu): " << a.scopAtins << endl;
+		return out;
+	}
+	friend ifstream& operator>>(ifstream& in, ActivitateCardio& a)
+	{
+		in >> (Activitate&)a;
+		cout << "Nr calorii arse: ";
+		in >> a.nrCaloriiArse;
+		cout << "Scop atins?(1-Da sau 0-Nu): ";
+		in >> a.scopAtins;
+		return in;
+	}
+	//functiile virtuale --- sunt specifice ierarhiilor de clase, pentru ca permit redefinerea comportamentului 
+	//in momentul cand cream/definim o functie virtuala se creeaza o tabela de pointeri la functii virtuale(aici se vor afla adresele metodelor virtuale)
+	//in momentul in care mostenim aceste functii virtuale si in clasa derivata ni se va crea aceea tabela de pointeri doar ca va avea alta adresa la metoda
+	string tipActivitate()
+	{
+		return "Activitatea aceasta este cardio!\n";
+	}
+	int returneazaCevaInt()
+	{
+		return this->nrCaloriiArse;
+	}
+};
+
+class Persoana
+{
+	string nume="" ;
+	int nrActivitati=0;
+	Activitate** activitati= nullptr;//vector de pointeri la obiect
+	//Activitate* activitati;//vector de obiect
+public:
+	Persoana()
+	{
+		
+	}
+	//constructor cu toti parametrii
+	Persoana(string nume, int nrActivitati, Activitate** activitati)
+	{
+		this->nume = nume;
+		this->nrActivitati = nrActivitati;
+		this->activitati = new Activitate * [this->nrActivitati];
+		for (int i = 0; i < this->nrActivitati; i++)
+		{
+			this->activitati[i] = new Activitate(*activitati[i]);
+		}
+	}
+	Persoana(const Persoana& p)
+	{
+		this->nume = p.nume;
+		this->nrActivitati = p.nrActivitati;
+		this->activitati = new Activitate * [this->nrActivitati];
+		for (int i = 0; i < this->nrActivitati; i++)
+		{
+			this->activitati[i] = new Activitate(*p.activitati[i]);
+		}
+	}
+	~Persoana()
+	{
+		
+			for (int i = 0; i < this->nrActivitati; i++)
+			{
+				delete activitati[i];
+			}
+			delete[]activitati;
+		
+	
+	}
+	Persoana& operator=(const Persoana& p)
+	{
+		if (this != &p)
+		{
+			
+				for (int i = 0; i < this->nrActivitati; i++)
+				{
+					delete activitati[i];
+				}
+				delete[]activitati;
+		
+			this->nume = p.nume;
+			this->nrActivitati = p.nrActivitati;
+			this->activitati = new Activitate * [this->nrActivitati];
+			for (int i = 0; i < this->nrActivitati; i++)
+			{
+				this->activitati[i] = new Activitate(*p.activitati[i]);
+			}
+			return *this;
+		}
+	}
+	friend ostream& operator<<(ostream& out, const Persoana& p)
+	{
+		out << "Nume: " << p.nume << endl;
+		out << "Nr activitati: " << p.nrActivitati << endl;
+		out << "ACctivitati: "  << endl;
+		for (int i = 0; i < p.nrActivitati; i++)
+		{
+			out << *p.activitati[i] << endl << endl;
+		}
+		return out;
+	}
+	Persoana& operator+=(Activitate& a)
+	{
+		Persoana copie = *this;
+		for (int i = 0; i < this->nrActivitati; i++)
+		{
+			delete activitati[i];
+		}
+		delete[]activitati;
+		this->nrActivitati++;
+		this->activitati = new Activitate * [this->nrActivitati];
+		for (int i = 0; i < copie.nrActivitati; i++)
+		{
+			this->activitati[i] = new Activitate(*copie.activitati[i]);
+		}
+		this->activitati[this->nrActivitati - 1] = new Activitate(a);
+		return *this;
+	}
+	Persoana& operator -=(Activitate& a)
+	{
+		Persoana copie = *this;
+		int nr = 0;
+		for (int i = 0; i < this->nrActivitati; i++)
+		{
+			if (a.getIdActivitate() == activitati[i]->getIdActivitate())
+			{
+				nr++;
+			}
+		}
+		this->nrActivitati = this->nrActivitati - nr;
+		for (int i = 0; i < this->nrActivitati; i++)
+		{
+			delete activitati[i];
+		}
+		delete[]activitati;
+		int pozitie = 0;
+		this->activitati = new Activitate * [this->nrActivitati];
+		for (int i = 0; i < copie.nrActivitati; i++)
+		{
+			if (a.getIdActivitate() != copie.activitati[i]->getIdActivitate())
+			{
+				this->activitati[pozitie] = new Activitate(*copie.activitati[i]);
+				pozitie++;
+			}
+		}
+		return *this;
+	}
+};
+
+//clasa template
+template<typename tipClasa>
+class Sablon
+{
+	int nrElemente=0;
+	tipClasa* elemente=NULL;
+public:
+	Sablon()
+	{
+
+	}
+	Sablon(int nrElemente, tipClasa* elemente)
+	{
+		this->nrElemente;
+		this->elemente = new tipClasa[this->nrElemente];
+		for (int i = 0; i < this->nrElemente; i++)
+		{
+			this->elemente[i] = elemente[i];
+		}
+	}
+};
+int main()
+{
+	Activitate a;
+	cout << a.getIdActivitate() << endl;
+	cout << a.getDenumire() << endl;
+	string denumiri[] = { "bara","haltere","Ciocan" };
+	float greutate[] = { 20,17.5,11.5};
+	Activitate a1("Sala", "Acasa", 30, 3, denumiri, greutate, Usoara);
+	cout << endl<<endl<<"Getteri---------------------"<<endl<<endl;
+	cout<<a1.getIdActivitate()<<endl;
+	cout<<a1.getDenumire()<<endl;
+	cout<<a1.getLocatie()<<endl;
+	cout<<a1.getDurata()<<endl;
+	cout<<a1.getNrObiecte()<<endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	cout<<a1.getGradDificultate()<<endl;
+	cout << endl<<endl<<"Constructor de copiere---------------------" << endl << endl;
+	Activitate a2 = a1;
+	cout << a2.getIdActivitate() << endl;
+	cout << a2.getDenumire() << endl;
+	cout << a2.getLocatie() << endl;
+	cout << a2.getDurata() << endl;
+	cout << a2.getNrObiecte() << endl;
+	for (int i = 0; i < a2.getNrObiecte(); i++)
+	{
+		cout << a2.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a2.getNrObiecte(); i++)
+	{
+		cout << a2.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	cout << a2.getGradDificultate() << endl;
+	cout << endl<<endl<<"Operator = ---------------------" << endl << endl;
+	a1 = a1;
+	cout << a1.getIdActivitate() << endl;
+	cout << a1.getDenumire() << endl;
+	cout << a1.getLocatie() << endl;
+	cout << a1.getDurata() << endl;
+	cout << a1.getNrObiecte() << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	cout << a1.getGradDificultate() << endl;
+	cout << endl<<endl<<"Setteri---------------------" << endl << endl;
+	try
+	{
+		a1.setDenumire("Io");
+	}
+	catch (ExceptieMesaj ex)
+	{
+		cout << ex.getMesaj() << endl;
+	}
+	string denumiriNoi[] = { "Topor","haltere","Ciocan" };
+	float greutatiNoi[] = { 22,17.5,11.5 };
+	a1.setLocatie("Zalau");
+	a1.setDurata(80);
+	a1.setObiecte(3, denumiriNoi, greutatiNoi);
+	a1.setGradDificultate(Grea);
+	cout << a1.getIdActivitate() << endl;
+	cout << a1.getDenumire() << endl;
+	cout << a1.getLocatie() << endl;
+	cout << a1.getDurata() << endl;
+	cout << a1.getNrObiecte() << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	cout << a1.getGradDificultate() << endl;
+	cout << endl<<endl<<"Metode---------------------" << endl << endl;
+	cout << "Greutatea totala este: " << a1.greutateTotala() << " kg." << endl;
+	cout << "Greutatea medie este: " << a1.mediaGreutate() << " kg." << endl;
+	cout << "Greutatea minima este: " << a1.minim() << " kg." << endl;
+	cout << "Greutatea maxima este: " << a1.maxim() << " kg." << endl;
+	a1.adaugaObiect("Topor", 7.6);
+	cout << a1.getNrObiecte() << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	a1.eliminaObiect("Topor");
+	cout << a1.getNrObiecte() << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getDenumireObiecte()[i] << " ";
+	}
+	cout << endl;
+	for (int i = 0; i < a1.getNrObiecte(); i++)
+	{
+		cout << a1.getGreutateObiecte()[i] << " ";
+	}
+	cout << endl;
+	cout << endl<<endl<<"Operator <<---------------------" << endl << endl;
+	cout << a1;
+	cout << endl<<endl<<"Operator >>---------------------" << endl << endl;
+	/*cin >> a;*/
+	cout << a << endl;
+	cout << endl<<endl<<"Fisiere text---------------------" << endl << endl;
+	Activitate a3;
+	ofstream f("activitate.txt", ios::out);
+	f << a1 << endl;
+	cout << "Obiectul a fost scris in text!" << endl;
+	f.close();
+	ifstream g("activitate.txt", ios::in);
+	if (g.is_open())
+	{
+		g >> a3;	
+		cout << "Obiectul a fost citit din text!" << endl;
+		g.close();
+	}
+	else
+	{
+		cout << "Fisierul nu exista!" << endl;
+	}
+	cout << a3 << endl;
+	cout << endl<<endl<<"Fisiere binare---------------------" << endl << endl;
+	Activitate aBinar;
+	a1.serializare("fisierBinar.dat");
+	aBinar.deserializare("fisierBinar.dat");
+	cout << aBinar << endl;
+	cout << endl<<endl<<"Operator cast---------------------" << endl << endl;
+	int durataAct = (int)a1;
+	float medieAct = (float)a1;
+	cout << durataAct << " " << medieAct << endl;
+	cout << endl<<endl<<"Operator functie -- ()---------------------" << endl << endl;
+	cout << a1() << endl;
+	cout << endl<<endl<<"Operator de indexare -- []---------------------" << endl << endl;
+	cout<<a1[1]<<endl;
+	a1[1] = "Balustrada";
+	cout << a1 << endl;
+	//do-while(pana cand fortezi utilizatorul sa introduca valori corecte)
+	int pozitie;
+	/*do
+	{
+		cout << "introduceti pozitia dorita pentru a vedea ce valoare se afla acolo: ";
+		cin >> pozitie;
+		try
+		{
+			cout << a1[pozitie] << endl;
+		}
+		catch (ExceptieMesaj ex)
+		{
+			cout << ex.getMesaj() << endl;
+		}
+	} while (pozitie < 0 || pozitie >= a1.getNrObiecte());
+
+
+	try
+	{
+		cout<<a1[-1]<<endl;
+	}
+	catch (ExceptieMesaj ex)
+	{
+		cout << ex.getMesaj() << endl;
+	}*/
+
+	cout << endl<<endl<<"Operator ++ ---------------------" << endl << endl;
+	cout << "Postfixat" << endl;
+	Activitate a6 = a1++;
+	cout << a1 << endl;
+	cout << a6 << endl<<endl;
+	cout << "Prefixat" << endl;
+	Activitate a7 = ++a1;
+	cout << a1 << endl;
+	cout << a7 << endl;
+	cout << endl<<endl<<"Operator += ---------------------" << endl << endl;
+	a1 += a7;
+	cout << a1 << endl;
+	a1 += "Sabie";
+	cout << a1 << endl;
+	cout << endl<<endl<<"Operator + ---------------------" << endl << endl;
+	cout << endl << "1)obiect + valoare" << endl<<endl;
+	Activitate a8 = a1 + 100;
+	cout << a1 << endl;
+	cout << a8 << endl;
+	cout << endl << "2)obiect + obiect" << endl<<endl;
+	Activitate a9 = a8 + a1;
+	cout << a1 << endl;
+	cout << a8 << endl;
+	cout << a9 << endl;
+	cout << endl << "3)valoare + obiect" << endl<<endl;
+	a9 = 100 + a9;
+	cout << a9 << endl;
+	cout << endl << endl << "MOSTENIRE ---------------------" << endl << endl;
+
+	ActivitateCardio ac1("Sala", "Acasa", 30, 3, denumiri, greutate, Usoara,400,1);
+	ActivitateCardio ac11("Mancare", "Acasa", 130, 3, denumiri, greutate, Usoara,400,1);
+	cout << ac1 << endl;
+	cout << endl << endl << "Up-Casting" << endl ;
+	Activitate aTest = ac1;
+	cout << aTest << endl;
+	cout << endl << endl << "Down-Casting" << endl;
+	ActivitateCardio acTest = aTest;
+	cout << acTest << endl;
+	acTest = ac1;
+	cout << acTest << endl;
+	/*cin >> acTest;
+	cout << acTest<<endl;*/
+	cout << endl << endl << "Functii virtuale ---------------------" << endl << endl;
+
+	cout << aTest.tipActivitate() << endl;
+	cout << acTest.tipActivitate() << endl;
+
+	cout << endl << endl << "Evidentierea late binding-ului ---------------------" << endl << endl;
+	Activitate* ap;
+	ActivitateCardio* acp = new ActivitateCardio();
+	ap = acp;// punem in ap adresa lui acp
+	cout << ap->tipActivitate() << endl;
+	cout << acp->tipActivitate() << endl;
+
+	Activitate* vecActivitati[4];
+	vecActivitati[0]= & a;
+	vecActivitati[1]= & aTest;
+	vecActivitati[2]= & ac11;
+	vecActivitati[3]= & ac1;
+	for (int i = 0; i < 4; i++)
+	{
+		cout << vecActivitati[i]->returneazaCevaInt() << endl;
+	}
+
+	cout << endl << endl << "HAS A ---------------------" << endl << endl;
+	Persoana p("Adrian", 4, vecActivitati);
+	cout << p << endl;
+	p += a;
+	cout << p << endl;
+
+	cout << endl << endl << endl;
+	p -= a;
+	cout << p << endl;
+
+	cout << endl << endl << "Template ---------------------" << endl << endl;
+	Sablon<Activitate> sablonActiviate;
+	Sablon<ActivitateCardio> sablonAcitivitateCardio;
+	Sablon<Persoana> sablonPersoana;
+	cout << endl << endl << "STL---VECTOR ---------------------" << endl << endl;
+	//stl -- standard template library
+	//sunt impartie in 3 tipuri : 1) containere, 2) iteratori, 3)algoritmi
+	vector<Activitate> vectorActivitati;
+	//ca sa populam acest vector utilizam comanda push_back
+	vectorActivitati.push_back(a1);
+	vectorActivitati.push_back(aTest);
+	vectorActivitati.push_back(ac11);
+	vectorActivitati.push_back(acTest);
+	//dimensiunea vectorului o aflam cu .size()
+	for (int i = 0; i < vectorActivitati.size(); i++)
+	{
+		cout << vectorActivitati[i] << endl;
+	}
+	cout<<endl<<endl << "STL SORTAT DESCRESCATOR DUPA DURATA" << endl << endl;
+	sort(vectorActivitati.begin(), vectorActivitati.end(), comparDurata<Activitate>);
+	for (int i = 0; i < vectorActivitati.size(); i++)
+	{
+		cout << vectorActivitati[i] << endl;
+	}
+	cout << endl << endl << "STL---SET ---------------------" << endl << endl;
+	set<Activitate> setActivitati;
+	setActivitati.insert(a1);
+	setActivitati.insert(acTest);
+	setActivitati.insert(aTest);
+	setActivitati.insert(ac11);
+	set<Activitate> ::iterator it;
+	for (it = setActivitati.begin(); it != setActivitati.end(); it++)
+	{
+		cout << *it << endl << endl;
+	}
+
+	cout << endl << endl << "STL---MAP ---------------------" << endl << endl;
+	map<int,Activitate> mapActivitate;
+	mapActivitate.insert(pair<int, Activitate>(12, ac11));
+	mapActivitate.insert(pair<int, Activitate>(1, a1));
+	mapActivitate.insert(pair<int, Activitate>(13, aTest));
+	map<int, Activitate> ::iterator iter;
+	for (iter = mapActivitate.begin(); iter != mapActivitate.end(); iter++)
+	{
+		cout << iter->first << endl << endl;
+		cout << iter->second << endl << endl;
+	}
+}
